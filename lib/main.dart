@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:goals/todo-list.dart';
+import 'package:goals/tasks/task-list.dart';
 
 void main() => runApp(GoalsApp());
 
@@ -8,7 +8,7 @@ class GoalsApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Goals',
-      home: new ToDoList(),
+      home: new TaskList(),
       theme: ThemeData(
         primarySwatch: Colors.red,
       )

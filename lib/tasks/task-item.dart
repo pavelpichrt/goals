@@ -1,7 +1,7 @@
 class TaskItem {
-  final String text;
-  final DateTime createdDate;
-  final DateTime dueDate;
+  String text;
+  DateTime dueDate;
+  final DateTime createdDate = DateTime.now();
 
-  TaskItem(this.text, this.dueDate, this.createdDate);
+  TaskItem(this.text, this.dueDate);
 }

@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:goals/tasks/add-task-button.dart';
 import 'package:goals/tasks/task-item.dart';
 import 'package:intl/intl.dart';
-import 'package:goals/tasks/add-task.dart';
+import 'package:goals/tasks/task-view.dart';
 
 class TaskList extends StatefulWidget {
   @override
@@ -13,13 +13,8 @@ class TaskList extends StatefulWidget {
 class ToDoListState extends State<TaskList> {
   List<TaskItem> _taskItems = [];
 
-  void _addTaskItem(String text, DateTime dueDate) {
-    debugPrint('asd');
-    debugPrint(dueDate.toString());
-
-    setState(() {
-      _taskItems.add(TaskItem(text, dueDate, new DateTime.now()));
-    });
+  void _addTaskItem(TaskItem task) {
+    setState(() => _taskItems.add(task));
   }
 
   void _removeTaskItem(int index) {
@@ -70,13 +65,16 @@ class ToDoListState extends State<TaskList> {
         DateFormat('dd/MM/y HH:mm').format(task.dueDate);
 
     return Container(
-      child: ListTile(
-        trailing: IconButton(
-          icon: Icon(Icons.check_circle_outline),
-          onPressed: () => _promptRemoveTodoItem(index),
+      child: GestureDetector(
+        onTap: () => _pushEditToDoScreen(index),
+        child: ListTile(
+          trailing: IconButton(
+            icon: Icon(Icons.check_circle_outline),
+            onPressed: () => _promptRemoveTodoItem(index),
+          ),
+          title:  Text(task.text),
+          subtitle: Text('Due: $formattedDate'),
         ),
-        title: Text(task.text),
-        subtitle: Text('Due: $formattedDate'),
       ),
       decoration: BoxDecoration(
         border: const Border(bottom: BorderSide(color: Colors.black12)),
@@ -84,10 +82,32 @@ class ToDoListState extends State<TaskList> {
     );
   }
 
+  void _pushEditToDoScreen(index) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) {
+          return TaskView(
+            title: 'Edit task',
+            task: _taskItems[index],
+            onSubmitted: () => null,
+          );
+        } 
+      ),
+    );
+  }
+
   void _pushAddToDoScreen() {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => AddTask(onSubmitted: _addTaskItem),
+        builder: (context) {
+          final TaskItem newTask = TaskItem('', DateTime.now());
+
+          return TaskView(
+            title: 'Add task',
+            task: newTask,
+            onSubmitted: () => _addTaskItem(newTask),
+          );
+        } 
       ),
     );
   }

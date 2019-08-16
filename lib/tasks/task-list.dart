@@ -4,20 +4,51 @@ import 'package:goals/tasks/add-task-button.dart';
 import 'package:goals/tasks/task-item.dart';
 import 'package:intl/intl.dart';
 import 'package:goals/tasks/task-view.dart';
+import 'package:goals/database/task-item-provider.dart';
 
 class TaskList extends StatefulWidget {
+  final List<TaskItem> dbTasks;
+  final TaskItemProvider taskProvider;
+
   @override
-  createState() => new ToDoListState();
+  createState() => TaskListState(dbTasks, taskProvider);
+
+  TaskList(this.dbTasks, this.taskProvider);
 }
 
-class ToDoListState extends State<TaskList> {
+class TaskListState extends State<TaskList> {
   List<TaskItem> _taskItems = [];
+  List<TaskItem> dbTasks;
+  TaskItemProvider taskProvider;
 
-  void _addTaskItem(TaskItem task) {
+  TaskListState(this.dbTasks, this.taskProvider);
+
+  @override
+  initState() {
+    super.initState();
+
+    setState(() {
+      _taskItems = dbTasks;
+    });
+  }
+
+  Future<void> _addTaskItem(TaskItem task) async {
+    await taskProvider.insertTask(task);
+
     setState(() => _taskItems.add(task));
   }
 
-  void _removeTaskItem(int index) {
+  Future<void> _editTaskItem(TaskItem task) async {
+    await taskProvider.updateTask(task);
+  }
+
+  Future<void> _removeTaskItem(int index) async {
+    final TaskItem task = _taskItems[index];
+
+    if (task.id != null) {
+      await taskProvider.deleteTask(task.id);
+    }
+
     setState(() => _taskItems.removeAt(index));
   }
 
@@ -50,7 +81,7 @@ class ToDoListState extends State<TaskList> {
   Widget _buildTaskList() {
     _taskItems.sort((task1, task2) => task1.dueDate.compareTo(task2.dueDate));
 
-    return new ListView.builder(
+    return ListView.builder(
       padding: const EdgeInsets.all(8.0),
       itemBuilder: (context, index) {
         if (index < _taskItems.length) {
@@ -72,7 +103,7 @@ class ToDoListState extends State<TaskList> {
             icon: Icon(Icons.check_circle_outline),
             onPressed: () => _promptRemoveTodoItem(index),
           ),
-          title:  Text(task.text),
+          title: Text(task.text),
           subtitle: Text('Due: $formattedDate'),
         ),
       ),
@@ -84,31 +115,29 @@ class ToDoListState extends State<TaskList> {
 
   void _pushEditToDoScreen(index) {
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) {
-          return TaskView(
-            title: 'Edit task',
-            task: _taskItems[index],
-            onSubmitted: () => null,
-          );
-        } 
-      ),
+      MaterialPageRoute(builder: (context) {
+        final TaskItem task = _taskItems[index];
+
+        return TaskView(
+          title: 'Edit task',
+          task: task,
+          onSubmitted: () => _editTaskItem(task),
+        );
+      }),
     );
   }
 
   void _pushAddToDoScreen() {
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) {
-          final TaskItem newTask = TaskItem('', DateTime.now());
+      MaterialPageRoute(builder: (context) {
+        final TaskItem newTask = TaskItem('', DateTime.now());
 
-          return TaskView(
-            title: 'Add task',
-            task: newTask,
-            onSubmitted: () => _addTaskItem(newTask),
-          );
-        } 
-      ),
+        return TaskView(
+          title: 'Add task',
+          task: newTask,
+          onSubmitted: () => _addTaskItem(newTask),
+        );
+      }),
     );
   }
 
@@ -130,6 +159,18 @@ class ToDoListState extends State<TaskList> {
       body: _buildTaskList(),
       floatingActionButton: new AddTaskButton(
         onPressed: _pushAddToDoScreen,
+      ),
+    );
+  }
+}
+
+class TaskListLoading extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Tasks')),
+      body: Center(
+        child: CircularProgressIndicator(),
       ),
     );
   }
